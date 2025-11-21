@@ -134,6 +134,8 @@ export const translations = {
     copyLink: 'Copy Link',
     downloadInBot: 'Download in Bot',
     linkCopied: 'Link copied to clipboard',
+    searchDescription: 'Search videos, channels, playlists',
+    channelsDescription: 'Explore channels and subscriptions',
   },
   ru: {
     // Navigation
@@ -247,6 +249,8 @@ export const translations = {
     copyLink: 'Копировать ссылку',
     downloadInBot: 'Скачать в боте',
     linkCopied: 'Ссылка скопирована в буфер обмена',
+    searchDescription: 'Поиск видео, каналов, плейлистов',
+    channelsDescription: 'Изучайте каналы и подписки',
   },
 };
 

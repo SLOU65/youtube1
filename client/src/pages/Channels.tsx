@@ -87,6 +87,12 @@ export default function Channels() {
           </div>
         )}
 
+        {!isLoading && !channelData?.items?.length && searchId && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">{t('noResults')}</p>
+          </div>
+        )}
+
         {channelData && channelData.items && channelData.items.length > 0 && (
           <div className="space-y-6">
             {channelData.items.map((channel: any) => (

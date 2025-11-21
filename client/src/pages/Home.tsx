@@ -141,11 +141,11 @@ export default function Home() {
                   <CheckCircle2 className="w-5 h-5" />
                   <span>{t('apiKeyConnected')}</span>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                   <Button
                     variant="outline"
                     onClick={() => refetchApiKeyStatus()}
-                    className="flex-1"
+                    className="w-full"
                   >
                     {t('reconnectApiKey')}
                   </Button>
@@ -153,7 +153,7 @@ export default function Home() {
                     variant="destructive"
                     onClick={handleDeleteApiKey}
                     disabled={deleteApiKeyMutation.isPending}
-                    className="hidden sm:inline-flex"
+                    className="w-full"
                   >
                     {deleteApiKeyMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -212,7 +212,7 @@ export default function Home() {
                     <div>
                       <h3 className="font-semibold text-foreground">{t('search')}</h3>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Search videos, channels, playlists
+                        {t('searchDescription')}
                       </p>
                     </div>
                   </div>
@@ -220,23 +220,7 @@ export default function Home() {
               </Card>
             </Link>
 
-            <Link href="/playlists">
-              <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
-                <CardContent className="pt-6">
-                  <div className="flex flex-col items-center text-center space-y-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <List className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">{t('playlists')}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Browse and manage playlists
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+
 
             <Link href="/channels">
               <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
@@ -248,7 +232,7 @@ export default function Home() {
                     <div>
                       <h3 className="font-semibold text-foreground">{t('channels')}</h3>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Explore channels and subscriptions
+                        {t('channelsDescription')}
                       </p>
                     </div>
                   </div>
