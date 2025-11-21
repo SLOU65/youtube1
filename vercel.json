@@ -1,20 +1,8 @@
 {
-  "buildCommand": "pnpm install && pnpm db:push && pnpm build",
+  "buildCommand": "pnpm install && pnpm build",
   "outputDirectory": "dist",
   "devCommand": "pnpm dev",
   "env": {
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "server/**": {
-      "memory": 1024,
-      "maxDuration": 60
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/trpc/:path*",
-      "destination": "/api/trpc/:path*"
-    }
-  ]
+  }
 }
