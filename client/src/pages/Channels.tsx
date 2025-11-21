@@ -18,9 +18,39 @@ export default function Channels() {
     { enabled: !!searchId }
   );
 
+  const extractChannelId = (input: string): string => {
+    const trimmed = input.trim();
+    
+    // Если уже ID (начинается с UC и имеет 24 символа)
+    if (trimmed.startsWith('UC') && trimmed.length === 24) {
+      return trimmed;
+    }
+    
+    // Извлечение из URL youtube.com/channel/ID
+    const channelMatch = trimmed.match(/youtube\.com\/channel\/([a-zA-Z0-9_-]{24})/);
+    if (channelMatch) return channelMatch[1];
+    
+    // Извлечение из URL youtube.com/@username
+    const atMatch = trimmed.match(/youtube\.com\/@([a-zA-Z0-9_.-]+)/);
+    if (atMatch) {
+      // Для @username нужно использовать forUsername вместо ID
+      return `@${atMatch[1]}`;
+    }
+    
+    // Извлечение из URL youtube.com/c/name
+    const cMatch = trimmed.match(/youtube\.com\/c\/([a-zA-Z0-9_.-]+)/);
+    if (cMatch) {
+      return `@${cMatch[1]}`;
+    }
+    
+    // Если ничего не совпадает, вернуть как есть (может быть прямой ID)
+    return trimmed;
+  };
+
   const handleSearch = () => {
-    if (channelId.trim()) {
-      setSearchId(channelId.trim());
+    const id = extractChannelId(channelId);
+    if (id) {
+      setSearchId(id);
     }
   };
 
@@ -63,7 +93,7 @@ export default function Channels() {
           <CardContent className="pt-6">
             <div className="flex gap-2">
               <Input
-                placeholder="Enter Channel ID (e.g., UCXuqSBlHAE6Xw-yeJA0Tunw)"
+                placeholder="Enter Channel ID, URL, or @username"
                 value={channelId}
                 onChange={(e) => setChannelId(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
