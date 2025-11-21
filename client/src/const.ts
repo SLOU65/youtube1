@@ -92,6 +92,10 @@ export const translations = {
     safeSearchModerate: 'Moderate',
     safeSearchNone: 'None',
     safeSearchStrict: 'Strict',
+    sortRelevance: 'Relevance',
+    sortDate: 'Date',
+    sortRating: 'Rating',
+    sortViewCount: 'View Count',
     
     // Common
     loading: 'Loading...',
@@ -187,6 +191,10 @@ export const translations = {
     safeSearchModerate: 'Умеренный',
     safeSearchNone: 'Отключен',
     safeSearchStrict: 'Строгий',
+    sortRelevance: 'Релевантность',
+    sortDate: 'Дата',
+    sortRating: 'Оценка',
+    sortViewCount: 'Просмотры',
     
     // Common
     loading: 'Загрузка...',

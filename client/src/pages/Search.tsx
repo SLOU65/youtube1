@@ -175,10 +175,10 @@ export default function Search() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="relevance">Relevance</SelectItem>
-                    <SelectItem value="date">Date</SelectItem>
-                    <SelectItem value="rating">Rating</SelectItem>
-                    <SelectItem value="viewCount">View Count</SelectItem>
+                    <SelectItem value="relevance">{t('sortRelevance')}</SelectItem>
+                    <SelectItem value="date">{t('sortDate')}</SelectItem>
+                    <SelectItem value="rating">{t('sortRating')}</SelectItem>
+                    <SelectItem value="viewCount">{t('sortViewCount')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
