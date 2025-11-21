@@ -2,28 +2,23 @@
   "buildCommand": "pnpm install && pnpm build",
   "outputDirectory": "dist",
   "devCommand": "pnpm dev",
-  "public": true,
+  "public": false,
   "cleanUrls": true,
   "trailingSlash": false,
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
-      ]
+  "functions": {
+    "api/index.ts": {
+      "memory": 1024,
+      "maxDuration": 30
     }
-  ],
-  "rewrites": [
+  },
+  "routes": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
+      "src": "/api/(.*)",
+      "dest": "/api/index.ts"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
