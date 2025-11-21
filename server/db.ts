@@ -2,7 +2,6 @@ import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, youtubeApiKeys, InsertYoutubeApiKey, userPreferences, InsertUserPreference } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { encryptApiKey, decryptApiKey } from './encryption';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -90,7 +89,7 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// YouTube API Key functions
+// YouTube API Key functions (without encryption)
 
 export async function saveYoutubeApiKey(userId: number, apiKey: string) {
   const db = await getDb();
@@ -98,24 +97,26 @@ export async function saveYoutubeApiKey(userId: number, apiKey: string) {
     throw new Error("Database not available");
   }
 
-  // Deactivate all existing keys for this user
-  await db.update(youtubeApiKeys)
-    .set({ isActive: false })
-    .where(eq(youtubeApiKeys.userId, userId));
+  try {
+    // Deactivate all existing keys for this user
+    await db.update(youtubeApiKeys)
+      .set({ isActive: false })
+      .where(eq(youtubeApiKeys.userId, userId));
 
-  // Encrypt the new API key
-  const { encrypted, iv } = encryptApiKey(apiKey);
+    // Insert the new API key without encryption
+    const result = await db.insert(youtubeApiKeys).values({
+      userId,
+      encryptedApiKey: apiKey, // Store plaintext in encryptedApiKey field
+      iv: '', // Empty IV since we're not encrypting
+      isActive: true,
+      lastValidated: new Date(),
+    });
 
-  // Insert the new encrypted key
-  const result = await db.insert(youtubeApiKeys).values({
-    userId,
-    encryptedApiKey: encrypted,
-    iv,
-    isActive: true,
-    lastValidated: new Date(),
-  });
-
-  return result;
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to save API key:", error);
+    throw error;
+  }
 }
 
 export async function getActiveYoutubeApiKey(userId: number): Promise<string | null> {
@@ -124,25 +125,30 @@ export async function getActiveYoutubeApiKey(userId: number): Promise<string | n
     throw new Error("Database not available");
   }
 
-  const result = await db.select()
-    .from(youtubeApiKeys)
-    .where(and(
-      eq(youtubeApiKeys.userId, userId),
-      eq(youtubeApiKeys.isActive, true)
-    ))
-    .limit(1);
+  try {
+    const result = await db.select()
+      .from(youtubeApiKeys)
+      .where(and(
+        eq(youtubeApiKeys.userId, userId),
+        eq(youtubeApiKeys.isActive, true)
+      ))
+      .limit(1);
 
-  if (result.length === 0) {
-    return null;
+    if (result.length === 0) {
+      return null;
+    }
+
+    const keyData = result[0];
+    if (!keyData) {
+      return null;
+    }
+
+    // Return the API key directly (no decryption needed)
+    return keyData.encryptedApiKey;
+  } catch (error) {
+    console.error("[Database] Failed to get API key:", error);
+    throw error;
   }
-
-  const keyData = result[0];
-  if (!keyData) {
-    return null;
-  }
-
-  // Decrypt and return the API key
-  return decryptApiKey(keyData.encryptedApiKey, keyData.iv);
 }
 
 export async function deleteYoutubeApiKey(userId: number) {
@@ -151,9 +157,14 @@ export async function deleteYoutubeApiKey(userId: number) {
     throw new Error("Database not available");
   }
 
-  await db.update(youtubeApiKeys)
-    .set({ isActive: false })
-    .where(eq(youtubeApiKeys.userId, userId));
+  try {
+    await db.update(youtubeApiKeys)
+      .set({ isActive: false })
+      .where(eq(youtubeApiKeys.userId, userId));
+  } catch (error) {
+    console.error("[Database] Failed to delete API key:", error);
+    throw error;
+  }
 }
 
 export async function hasActiveYoutubeApiKey(userId: number): Promise<boolean> {
@@ -162,15 +173,20 @@ export async function hasActiveYoutubeApiKey(userId: number): Promise<boolean> {
     throw new Error("Database not available");
   }
 
-  const result = await db.select({ id: youtubeApiKeys.id })
-    .from(youtubeApiKeys)
-    .where(and(
-      eq(youtubeApiKeys.userId, userId),
-      eq(youtubeApiKeys.isActive, true)
-    ))
-    .limit(1);
+  try {
+    const result = await db.select({ id: youtubeApiKeys.id })
+      .from(youtubeApiKeys)
+      .where(and(
+        eq(youtubeApiKeys.userId, userId),
+        eq(youtubeApiKeys.isActive, true)
+      ))
+      .limit(1);
 
-  return result.length > 0;
+    return result.length > 0;
+  } catch (error) {
+    console.error("[Database] Failed to check API key:", error);
+    return false;
+  }
 }
 
 // User preferences functions
@@ -181,12 +197,17 @@ export async function getUserPreference(userId: number) {
     throw new Error("Database not available");
   }
 
-  const result = await db.select()
-    .from(userPreferences)
-    .where(eq(userPreferences.userId, userId))
-    .limit(1);
+  try {
+    const result = await db.select()
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, userId))
+      .limit(1);
 
-  return result.length > 0 ? result[0] : null;
+    return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error("[Database] Failed to get user preference:", error);
+    return null;
+  }
 }
 
 export async function setUserLanguage(userId: number, language: 'ru' | 'en') {
@@ -195,16 +216,21 @@ export async function setUserLanguage(userId: number, language: 'ru' | 'en') {
     throw new Error("Database not available");
   }
 
-  const existing = await getUserPreference(userId);
+  try {
+    const existing = await getUserPreference(userId);
 
-  if (existing) {
-    await db.update(userPreferences)
-      .set({ language })
-      .where(eq(userPreferences.userId, userId));
-  } else {
-    await db.insert(userPreferences).values({
-      userId,
-      language,
-    });
+    if (existing) {
+      await db.update(userPreferences)
+        .set({ language })
+        .where(eq(userPreferences.userId, userId));
+    } else {
+      await db.insert(userPreferences).values({
+        userId,
+        language,
+      });
+    }
+  } catch (error) {
+    console.error("[Database] Failed to set user language:", error);
+    throw error;
   }
 }
