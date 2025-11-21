@@ -138,13 +138,14 @@ export class YouTubeAPI {
     });
   }
 
-  async getPlaylistItems(playlistId: string, maxResults: number = 50, pageToken?: string) {
-    return this.request('/playlistItems', {
+  async getPlaylistItems(playlistId: string, maxResults?: number, pageToken?: string) {
+    const params: Record<string, any> = {
       part: 'snippet,contentDetails',
       playlistId,
-      maxResults,
-      pageToken,
-    });
+      maxResults: maxResults || 50,
+    };
+    if (pageToken) params.pageToken = pageToken;
+    return this.request('/playlistItems', params);
   }
 
   async createPlaylist(title: string, description: string, privacyStatus: 'public' | 'private' | 'unlisted') {

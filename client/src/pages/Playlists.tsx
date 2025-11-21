@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, Copy, Download, Loader2, Search } from "lucide-react";
@@ -58,13 +58,17 @@ export default function Playlists() {
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="flex-1"
               />
-              <Button onClick={handleSearch} disabled={!playlistId.trim() || isLoading}>
+                      <button
+                onClick={handleSearch}
+                disabled={!playlistId.trim() || isLoading}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Search className="w-4 h-4" />
                 )}
-              </Button>
+              </button>
             </div>
           </CardContent>
         </Card>
