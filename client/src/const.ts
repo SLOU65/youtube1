@@ -141,6 +141,20 @@ export const translations = {
     subscribers: 'Subscribers',
     views: 'Views',
     viewOnYouTube: 'View on YouTube',
+    
+    // API Key Instructions
+    howToGetApiKey: 'How to Get API Key',
+    step1Title: 'Go to Google Cloud Console',
+    step1Description: 'Open the Google Cloud Console and sign in with your Google account.',
+    openGoogleCloud: 'Open Google Cloud Console',
+    step2Title: 'Create a new project',
+    step2Description: 'Create a new project or select an existing one from the dropdown menu.',
+    step3Title: 'Enable YouTube Data API v3',
+    step3Description: 'Search for YouTube Data API v3 in the API library and enable it for your project.',
+    step4Title: 'Create API credentials',
+    step4Description: 'Go to the Credentials page and create a new API key.',
+    step5Title: 'Copy and paste your API key',
+    step5Description: 'Copy the generated API key and paste it in the field above.',
   },
   ru: {
     // Navigation
@@ -261,6 +275,20 @@ export const translations = {
     subscribers: 'Подписчики',
     views: 'Просмотры',
     viewOnYouTube: 'Смотреть на YouTube',
+    
+    // API Key Instructions
+    howToGetApiKey: 'Как получить API Key',
+    step1Title: 'Перейдите в Google Cloud Console',
+    step1Description: 'Откройте Google Cloud Console и войдите со своим аккаунтом Google.',
+    openGoogleCloud: 'Открыть Google Cloud Console',
+    step2Title: 'Создайте новый проект',
+    step2Description: 'Создайте новый проект или выберите существующий из раскрывающегося меню.',
+    step3Title: 'Включите YouTube Data API v3',
+    step3Description: 'Найдите YouTube Data API v3 в библиотеке API и включите её для вашего проекта.',
+    step4Title: 'Создайте учетные данные API',
+    step4Description: 'Перейдите на страницу Учетные данные и создайте новый API ключ.',
+    step5Title: 'Скопируйте и вставьте ваш API ключ',
+    step5Description: 'Скопируйте сгенерированный API ключ и вставьте его в поле выше.',
   },
 };
 

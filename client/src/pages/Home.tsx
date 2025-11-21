@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { getLoginUrl } from "@/const";
 import { useTranslation } from "@/hooks/useTranslation";
 import { trpc } from "@/lib/trpc";
-import { AlertCircle, CheckCircle2, Key, Loader2, Search, Video, List, MessageSquare, UserPlus } from "lucide-react";
+import { AlertCircle, CheckCircle2, Key, Loader2, Search, Video, List, MessageSquare, UserPlus, ChevronDown, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -169,6 +170,63 @@ export default function Home() {
                   <AlertCircle className="w-5 h-5" />
                   <span>{t('apiKeyNotConnected')}</span>
                 </div>
+
+                {/* Instructions */}
+                <Collapsible defaultOpen className="border border-border rounded-lg">
+                  <CollapsibleTrigger className="w-full flex items-center justify-between p-4 hover:bg-card/50">
+                    <span className="font-semibold text-foreground">{t('howToGetApiKey')}</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="border-t border-border p-4 space-y-4 bg-card/30">
+                    <div className="space-y-3 text-sm">
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">1</div>
+                        <div>
+                          <p className="font-semibold text-foreground">{t('step1Title')}</p>
+                          <p className="text-muted-foreground mt-1">{t('step1Description')}</p>
+                          <Button variant="link" size="sm" className="p-0 h-auto mt-2" asChild>
+                            <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                              {t('openGoogleCloud')} <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">2</div>
+                        <div>
+                          <p className="font-semibold text-foreground">{t('step2Title')}</p>
+                          <p className="text-muted-foreground mt-1">{t('step2Description')}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">3</div>
+                        <div>
+                          <p className="font-semibold text-foreground">{t('step3Title')}</p>
+                          <p className="text-muted-foreground mt-1">{t('step3Description')}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">4</div>
+                        <div>
+                          <p className="font-semibold text-foreground">{t('step4Title')}</p>
+                          <p className="text-muted-foreground mt-1">{t('step4Description')}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">5</div>
+                        <div>
+                          <p className="font-semibold text-foreground">{t('step5Title')}</p>
+                          <p className="text-muted-foreground mt-1">{t('step5Description')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
                 <div className="space-y-2">
                   <Label htmlFor="apiKey">{t('enterApiKey')}</Label>
                   <Input
