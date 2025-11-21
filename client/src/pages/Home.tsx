@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useTelegram } from "@/hooks/useTelegram";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,11 +12,19 @@ import { AlertCircle, CheckCircle2, Key, Loader2, Search, Video, List, MessageSq
 import { useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
+import TelegramAuth from "@/components/TelegramAuth";
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
+  const { isTelegramApp, user: telegramUser } = useTelegram();
   const { t, language, setLanguage } = useTranslation();
   const [apiKey, setApiKey] = useState("");
+
+  // If in Telegram, show Telegram-specific UI
+  if (isTelegramApp && telegramUser) {
+    return <TelegramAuth />;
+  }
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: apiKeyStatus, refetch: refetchApiKeyStatus } = trpc.youtube.hasApiKey.useQuery(
