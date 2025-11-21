@@ -214,6 +214,19 @@ export class YouTubeAPI {
     throw new Error('Comment deletion requires OAuth2 authentication');
   }
 
+  // Search channel videos
+  async searchChannelVideos(channelId: string, maxResults: number = 12, pageToken?: string) {
+    const params: Record<string, any> = {
+      part: 'snippet',
+      type: 'video',
+      channelId,
+      maxResults,
+      order: 'date',
+    };
+    if (pageToken) params.pageToken = pageToken;
+    return this.request('/search', params);
+  }
+
   // Subscriptions
   async getSubscriptions(channelId: string, maxResults: number = 50, pageToken?: string) {
     return this.request('/subscriptions', {

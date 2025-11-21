@@ -146,6 +146,26 @@ export const appRouter = router({
         return youtube.getChannelsByUsername(input.username);
       }),
 
+    getChannelVideos: protectedProcedure
+      .input(z.object({ 
+        channelId: z.string(),
+        maxResults: z.number().optional(),
+        pageToken: z.string().optional(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.searchChannelVideos(
+          input.channelId,
+          input.maxResults || 12,
+          input.pageToken
+        );
+      }),
+
     // Playlists
     getPlaylist: protectedProcedure
       .input(z.object({ playlistId: z.string() }))

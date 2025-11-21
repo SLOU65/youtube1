@@ -136,6 +136,11 @@ export const translations = {
     linkCopied: 'Link copied to clipboard',
     searchDescription: 'Search videos, channels, playlists',
     channelsDescription: 'Explore channels and subscriptions',
+    copy: 'Copy',
+    watch: 'Watch',
+    subscribers: 'Subscribers',
+    views: 'Views',
+    viewOnYouTube: 'View on YouTube',
   },
   ru: {
     // Navigation
@@ -251,6 +256,11 @@ export const translations = {
     linkCopied: 'Ссылка скопирована в буфер обмена',
     searchDescription: 'Поиск видео, каналов, плейлистов',
     channelsDescription: 'Изучайте каналы и подписки',
+    copy: 'Копировать',
+    watch: 'Смотреть',
+    subscribers: 'Подписчики',
+    views: 'Просмотры',
+    viewOnYouTube: 'Смотреть на YouTube',
   },
 };
 
