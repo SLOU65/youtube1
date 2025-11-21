@@ -2,23 +2,12 @@
   "buildCommand": "pnpm install && pnpm build",
   "outputDirectory": "dist",
   "devCommand": "pnpm dev",
-  "public": false,
   "cleanUrls": true,
   "trailingSlash": false,
-  "functions": {
-    "api/index.ts": {
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

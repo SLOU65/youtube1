@@ -18,7 +18,7 @@ function isSecureRequest(req: any) {
     ? forwardedProto
     : forwardedProto.split(",");
 
-  return protoList.some(proto => proto.trim().toLowerCase() === "https");
+  return protoList.some((proto: any) => proto.trim().toLowerCase() === "https");
 }
 
 export function getSessionCookieOptions(
