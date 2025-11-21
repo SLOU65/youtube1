@@ -1,10 +1,12 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { z } from "zod";
+import * as db from "./db";
+import { YouTubeAPI } from "./youtube";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -17,12 +19,217 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  // YouTube API Key Management
+  youtube: router({
+    // Check if user has an active API key
+    hasApiKey: protectedProcedure.query(async ({ ctx }) => {
+      const hasKey = await db.hasActiveYoutubeApiKey(ctx.user.id);
+      return { hasKey };
+    }),
+
+    // Save/Update YouTube API key
+    saveApiKey: protectedProcedure
+      .input(z.object({ apiKey: z.string().min(1) }))
+      .mutation(async ({ ctx, input }) => {
+        // Validate the API key first
+        const youtube = new YouTubeAPI(input.apiKey);
+        const isValid = await youtube.validateApiKey();
+
+        if (!isValid) {
+          throw new Error('Invalid YouTube API key');
+        }
+
+        await db.saveYoutubeApiKey(ctx.user.id, input.apiKey);
+        return { success: true };
+      }),
+
+    // Delete YouTube API key
+    deleteApiKey: protectedProcedure.mutation(async ({ ctx }) => {
+      await db.deleteYoutubeApiKey(ctx.user.id);
+      return { success: true };
+    }),
+
+    // Search
+    search: protectedProcedure
+      .input(z.object({
+        q: z.string().optional(),
+        type: z.enum(['video', 'channel', 'playlist']).optional(),
+        order: z.enum(['date', 'rating', 'relevance', 'title', 'videoCount', 'viewCount']).optional(),
+        publishedAfter: z.string().optional(),
+        publishedBefore: z.string().optional(),
+        videoDuration: z.enum(['short', 'medium', 'long']).optional(),
+        maxResults: z.number().optional(),
+        pageToken: z.string().optional(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.search(input);
+      }),
+
+    // Videos
+    getVideo: protectedProcedure
+      .input(z.object({ videoId: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.getVideo(input.videoId);
+      }),
+
+    getVideos: protectedProcedure
+      .input(z.object({ videoIds: z.array(z.string()) }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.getVideos(input.videoIds);
+      }),
+
+    getMostPopular: protectedProcedure
+      .input(z.object({
+        regionCode: z.string().optional(),
+        maxResults: z.number().optional(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.getMostPopularVideos(input.regionCode, input.maxResults);
+      }),
+
+    // Channels
+    getChannel: protectedProcedure
+      .input(z.object({ channelId: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.getChannel(input.channelId);
+      }),
+
+    getChannelByUsername: protectedProcedure
+      .input(z.object({ username: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.getChannelsByUsername(input.username);
+      }),
+
+    // Playlists
+    getPlaylist: protectedProcedure
+      .input(z.object({ playlistId: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.getPlaylist(input.playlistId);
+      }),
+
+    getPlaylistItems: protectedProcedure
+      .input(z.object({
+        playlistId: z.string(),
+        maxResults: z.number().optional(),
+        pageToken: z.string().optional(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.getPlaylistItems(input.playlistId, input.maxResults, input.pageToken);
+      }),
+
+    // Comments
+    getVideoComments: protectedProcedure
+      .input(z.object({
+        videoId: z.string(),
+        maxResults: z.number().optional(),
+        pageToken: z.string().optional(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.getVideoComments(input.videoId, input.maxResults, input.pageToken);
+      }),
+
+    getCommentReplies: protectedProcedure
+      .input(z.object({
+        parentId: z.string(),
+        maxResults: z.number().optional(),
+        pageToken: z.string().optional(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.getCommentReplies(input.parentId, input.maxResults, input.pageToken);
+      }),
+
+    // Subscriptions
+    getSubscriptions: protectedProcedure
+      .input(z.object({
+        channelId: z.string(),
+        maxResults: z.number().optional(),
+        pageToken: z.string().optional(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const apiKey = await db.getActiveYoutubeApiKey(ctx.user.id);
+        if (!apiKey) {
+          throw new Error('No active YouTube API key found');
+        }
+
+        const youtube = new YouTubeAPI(apiKey);
+        return youtube.getSubscriptions(input.channelId, input.maxResults, input.pageToken);
+      }),
+  }),
+
+  // User preferences
+  preferences: router({
+    get: protectedProcedure.query(async ({ ctx }) => {
+      const prefs = await db.getUserPreference(ctx.user.id);
+      return prefs || { language: 'en' as const };
+    }),
+
+    setLanguage: protectedProcedure
+      .input(z.object({ language: z.enum(['ru', 'en']) }))
+      .mutation(async ({ ctx, input }) => {
+        await db.setUserLanguage(ctx.user.id, input.language);
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

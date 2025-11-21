@@ -1,7 +1,8 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, youtubeApiKeys, InsertYoutubeApiKey, userPreferences, InsertUserPreference } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { encryptApiKey, decryptApiKey } from './encryption';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -89,4 +90,121 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// YouTube API Key functions
+
+export async function saveYoutubeApiKey(userId: number, apiKey: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Deactivate all existing keys for this user
+  await db.update(youtubeApiKeys)
+    .set({ isActive: false })
+    .where(eq(youtubeApiKeys.userId, userId));
+
+  // Encrypt the new API key
+  const { encrypted, iv } = encryptApiKey(apiKey);
+
+  // Insert the new encrypted key
+  const result = await db.insert(youtubeApiKeys).values({
+    userId,
+    encryptedApiKey: encrypted,
+    iv,
+    isActive: true,
+    lastValidated: new Date(),
+  });
+
+  return result;
+}
+
+export async function getActiveYoutubeApiKey(userId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db.select()
+    .from(youtubeApiKeys)
+    .where(and(
+      eq(youtubeApiKeys.userId, userId),
+      eq(youtubeApiKeys.isActive, true)
+    ))
+    .limit(1);
+
+  if (result.length === 0) {
+    return null;
+  }
+
+  const keyData = result[0];
+  if (!keyData) {
+    return null;
+  }
+
+  // Decrypt and return the API key
+  return decryptApiKey(keyData.encryptedApiKey, keyData.iv);
+}
+
+export async function deleteYoutubeApiKey(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.update(youtubeApiKeys)
+    .set({ isActive: false })
+    .where(eq(youtubeApiKeys.userId, userId));
+}
+
+export async function hasActiveYoutubeApiKey(userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db.select({ id: youtubeApiKeys.id })
+    .from(youtubeApiKeys)
+    .where(and(
+      eq(youtubeApiKeys.userId, userId),
+      eq(youtubeApiKeys.isActive, true)
+    ))
+    .limit(1);
+
+  return result.length > 0;
+}
+
+// User preferences functions
+
+export async function getUserPreference(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db.select()
+    .from(userPreferences)
+    .where(eq(userPreferences.userId, userId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function setUserLanguage(userId: number, language: 'ru' | 'en') {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const existing = await getUserPreference(userId);
+
+  if (existing) {
+    await db.update(userPreferences)
+      .set({ language })
+      .where(eq(userPreferences.userId, userId));
+  } else {
+    await db.insert(userPreferences).values({
+      userId,
+      language,
+    });
+  }
+}

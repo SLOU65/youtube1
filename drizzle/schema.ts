@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -25,4 +25,40 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * YouTube API keys table
+ * Stores encrypted API keys for each user
+ */
+export const youtubeApiKeys = mysqlTable("youtube_api_keys", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  /** Encrypted API key using AES-256 */
+  encryptedApiKey: text("encryptedApiKey").notNull(),
+  /** Initialization vector for AES encryption */
+  iv: varchar("iv", { length: 32 }).notNull(),
+  /** Whether the API key is currently active */
+  isActive: boolean("isActive").default(true).notNull(),
+  /** Last time the API key was validated */
+  lastValidated: timestamp("lastValidated"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type YoutubeApiKey = typeof youtubeApiKeys.$inferSelect;
+export type InsertYoutubeApiKey = typeof youtubeApiKeys.$inferInsert;
+
+/**
+ * User preferences table
+ * Stores user settings like language preference
+ */
+export const userPreferences = mysqlTable("user_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  /** Language preference: 'ru' or 'en' */
+  language: mysqlEnum("language", ["ru", "en"]).default("en").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserPreference = typeof userPreferences.$inferSelect;
+export type InsertUserPreference = typeof userPreferences.$inferInsert;

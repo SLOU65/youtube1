@@ -19,3 +19,130 @@ export const getLoginUrl = () => {
 
   return url.toString();
 };
+
+// Translations
+export const translations = {
+  en: {
+    // Navigation
+    home: 'Home',
+    search: 'Search',
+    videos: 'Videos',
+    channels: 'Channels',
+    playlists: 'Playlists',
+    comments: 'Comments',
+    subscriptions: 'Subscriptions',
+    settings: 'Settings',
+    
+    // API Key Management
+    apiKeyTitle: 'YouTube API Key',
+    apiKeyDescription: 'Connect your YouTube API key to access all features',
+    enterApiKey: 'Enter your YouTube API key',
+    apiKeyPlaceholder: 'AIzaSy...',
+    connectApiKey: 'Connect API Key',
+    reconnectApiKey: 'Reconnect API Key',
+    deleteApiKey: 'Delete API Key',
+    apiKeyConnected: 'API Key Connected',
+    apiKeyNotConnected: 'No API Key Connected',
+    validatingApiKey: 'Validating API key...',
+    apiKeyValid: 'API key is valid',
+    apiKeyInvalid: 'Invalid API key',
+    
+    // Search
+    searchPlaceholder: 'Search videos, channels, playlists...',
+    searchButton: 'Search',
+    searchResults: 'Search Results',
+    noResults: 'No results found',
+    filterBy: 'Filter by',
+    sortBy: 'Sort by',
+    videoType: 'Video',
+    channelType: 'Channel',
+    playlistType: 'Playlist',
+    
+    // Common
+    loading: 'Loading...',
+    error: 'Error',
+    success: 'Success',
+    cancel: 'Cancel',
+    save: 'Save',
+    delete: 'Delete',
+    edit: 'Edit',
+    back: 'Back',
+    next: 'Next',
+    previous: 'Previous',
+    
+    // Video
+    videoViews: 'views',
+    videoLikes: 'likes',
+    videoComments: 'comments',
+    channelSubscribers: 'subscribers',
+    channelVideos: 'videos',
+    
+    // Actions
+    copyLink: 'Copy Link',
+    downloadInBot: 'Download in Bot',
+    linkCopied: 'Link copied to clipboard',
+  },
+  ru: {
+    // Navigation
+    home: 'Главная',
+    search: 'Поиск',
+    videos: 'Видео',
+    channels: 'Каналы',
+    playlists: 'Плейлисты',
+    comments: 'Комментарии',
+    subscriptions: 'Подписки',
+    settings: 'Настройки',
+    
+    // API Key Management
+    apiKeyTitle: 'API-ключ YouTube',
+    apiKeyDescription: 'Подключите свой API-ключ YouTube для доступа ко всем функциям',
+    enterApiKey: 'Введите ваш API-ключ YouTube',
+    apiKeyPlaceholder: 'AIzaSy...',
+    connectApiKey: 'Подключить API-ключ',
+    reconnectApiKey: 'Переподключить API-ключ',
+    deleteApiKey: 'Удалить API-ключ',
+    apiKeyConnected: 'API-ключ подключен',
+    apiKeyNotConnected: 'API-ключ не подключен',
+    validatingApiKey: 'Проверка API-ключа...',
+    apiKeyValid: 'API-ключ действителен',
+    apiKeyInvalid: 'Недействительный API-ключ',
+    
+    // Search
+    searchPlaceholder: 'Поиск видео, каналов, плейлистов...',
+    searchButton: 'Поиск',
+    searchResults: 'Результаты поиска',
+    noResults: 'Результаты не найдены',
+    filterBy: 'Фильтр',
+    sortBy: 'Сортировка',
+    videoType: 'Видео',
+    channelType: 'Канал',
+    playlistType: 'Плейлист',
+    
+    // Common
+    loading: 'Загрузка...',
+    error: 'Ошибка',
+    success: 'Успешно',
+    cancel: 'Отмена',
+    save: 'Сохранить',
+    delete: 'Удалить',
+    edit: 'Изменить',
+    back: 'Назад',
+    next: 'Далее',
+    previous: 'Предыдущая',
+    
+    // Video
+    videoViews: 'просмотров',
+    videoLikes: 'лайков',
+    videoComments: 'комментариев',
+    channelSubscribers: 'подписчиков',
+    channelVideos: 'видео',
+    
+    // Actions
+    copyLink: 'Копировать ссылку',
+    downloadInBot: 'Скачать в боте',
+    linkCopied: 'Ссылка скопирована в буфер обмена',
+  },
+};
+
+export type Language = keyof typeof translations;
+export type TranslationKey = keyof typeof translations.en;
