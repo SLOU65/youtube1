@@ -153,6 +153,7 @@ export default function Home() {
                     variant="destructive"
                     onClick={handleDeleteApiKey}
                     disabled={deleteApiKeyMutation.isPending}
+                    className="hidden sm:inline-flex"
                   >
                     {deleteApiKeyMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -212,24 +213,6 @@ export default function Home() {
                       <h3 className="font-semibold text-foreground">{t('search')}</h3>
                       <p className="text-xs text-muted-foreground mt-1">
                         Search videos, channels, playlists
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-
-            <Link href="/videos">
-              <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
-                <CardContent className="pt-6">
-                  <div className="flex flex-col items-center text-center space-y-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <Video className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">{t('videos')}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Manage and view video details
                       </p>
                     </div>
                   </div>

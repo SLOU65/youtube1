@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,15 +14,11 @@ export default function Search() {
   const [type, setType] = useState<"video" | "channel" | "playlist">("video");
   const [order, setOrder] = useState<"relevance" | "date" | "rating" | "viewCount">("relevance");
   
-  // Advanced filters
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [videoDuration, setVideoDuration] = useState<"any" | "short" | "medium" | "long">("any");
+  // Simplified filters
+  const [showFilters, setShowFilters] = useState(false);
   const [videoDefinition, setVideoDefinition] = useState<"any" | "high" | "standard">("any");
-  const [videoDimension, setVideoDimension] = useState<"any" | "2d" | "3d">("any");
-  const [videoEmbeddable, setVideoEmbeddable] = useState<"any" | "true">("any");
-  const [videoLicense, setVideoLicense] = useState<"any" | "creativeCommon" | "youtube">("any");
   const [videoType, setVideoType] = useState<"any" | "episode" | "movie">("any");
-  const [safeSearch, setSafeSearch] = useState<"moderate" | "none" | "strict">("moderate");
+  const [publishedAfter, setPublishedAfter] = useState<"any" | "hour" | "day" | "week" | "month" | "year">("any");
 
   const [searchParams, setSearchParams] = useState<any>(null);
   const [allResults, setAllResults] = useState<any[]>([]);
@@ -58,27 +53,66 @@ export default function Search() {
     }
   }, [searchData]);
 
+  // Extract ID from URL if user pastes a link
+  const extractIdFromUrl = (url: string): string => {
+    // YouTube video: https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID
+    const videoMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (videoMatch) return videoMatch[1];
+    
+    // YouTube channel: https://www.youtube.com/c/CHANNEL_NAME or https://www.youtube.com/@CHANNEL_NAME
+    const channelMatch = url.match(/youtube\.com\/(?:c\/|@)([a-zA-Z0-9_-]+)/);
+    if (channelMatch) return channelMatch[1];
+    
+    // YouTube playlist: https://www.youtube.com/playlist?list=PLAYLIST_ID
+    const playlistMatch = url.match(/youtube\.com\/playlist\?list=([a-zA-Z0-9_-]+)/);
+    if (playlistMatch) return playlistMatch[1];
+    
+    // If no URL pattern matches, return the original string (might be a direct ID)
+    return url.trim();
+  };
+
   const handleSearch = () => {
     if (!query.trim()) {
       toast.error(t('enterApiKey'));
       return;
     }
 
+    // Extract ID if user pasted a URL
+    const searchQuery = extractIdFromUrl(query);
+
     const params: any = {
-      q: query.trim(),
+      q: searchQuery,
       type,
       order,
       maxResults: 50,
     };
 
-    // Add advanced filters only if they're not 'any'
-    if (videoDuration !== 'any') params.videoDuration = videoDuration;
+    // Add filters only if they're not 'any'
     if (videoDefinition !== 'any') params.videoDefinition = videoDefinition;
-    if (videoDimension !== 'any') params.videoDimension = videoDimension;
-    if (videoEmbeddable !== 'any') params.videoEmbeddable = videoEmbeddable;
-    if (videoLicense !== 'any') params.videoLicense = videoLicense;
     if (videoType !== 'any') params.videoType = videoType;
-    if (safeSearch !== 'moderate') params.safeSearch = safeSearch;
+    if (publishedAfter !== 'any') {
+      const now = new Date();
+      let publishedAfterDate = new Date();
+      
+      switch (publishedAfter) {
+        case 'hour':
+          publishedAfterDate.setHours(publishedAfterDate.getHours() - 1);
+          break;
+        case 'day':
+          publishedAfterDate.setDate(publishedAfterDate.getDate() - 1);
+          break;
+        case 'week':
+          publishedAfterDate.setDate(publishedAfterDate.getDate() - 7);
+          break;
+        case 'month':
+          publishedAfterDate.setMonth(publishedAfterDate.getMonth() - 1);
+          break;
+        case 'year':
+          publishedAfterDate.setFullYear(publishedAfterDate.getFullYear() - 1);
+          break;
+      }
+      params.publishedAfter = publishedAfterDate.toISOString();
+    }
 
     setSearchParams(params);
     setAllResults([]);
@@ -101,196 +135,160 @@ export default function Search() {
     setTimeout(() => refetch(), 100);
   };
 
-  const copyLink = (id: string, itemType: string) => {
-    let url = "";
-    if (itemType === "video") {
-      url = `https://www.youtube.com/watch?v=${id}`;
-    } else if (itemType === "channel") {
-      url = `https://www.youtube.com/channel/${id}`;
-    } else if (itemType === "playlist") {
-      url = `https://www.youtube.com/playlist?list=${id}`;
-    }
-    navigator.clipboard.writeText(url);
-    toast.success(t('linkCopied'));
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(t('copied'));
   };
 
-  const canLoadMore = nextPageToken && !maxReached && !isLoading;
+  const getResultIcon = (item: any) => {
+    if (item.id?.videoId) return <SearchIcon className="w-4 h-4" />;
+    if (item.id?.channelId) return <SearchIcon className="w-4 h-4" />;
+    if (item.id?.playlistId) return <SearchIcon className="w-4 h-4" />;
+    return <SearchIcon className="w-4 h-4" />;
+  };
+
+  const getResultUrl = (item: any) => {
+    if (item.id?.videoId) return `https://www.youtube.com/watch?v=${item.id.videoId}`;
+    if (item.id?.channelId) return `https://www.youtube.com/channel/${item.id.channelId}`;
+    if (item.id?.playlistId) return `https://www.youtube.com/playlist?list=${item.id.playlistId}`;
+    return '#';
+  };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container py-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link href="/">
-              <Button variant="ghost" size="icon">
+              <button className="p-2 hover:bg-accent rounded-lg transition-colors">
                 <ArrowLeft className="w-5 h-5" />
-              </Button>
+              </button>
             </Link>
             <h1 className="text-xl font-bold text-foreground">{t('search')}</h1>
           </div>
         </div>
       </header>
 
-      <main className="container py-6 space-y-6">
-        {/* Search Bar */}
-        <Card>
+      <main className="container py-8 space-y-6">
+        {/* Search Card */}
+        <Card className="border-primary/20">
           <CardContent className="pt-6 space-y-4">
+            {/* Search Input */}
             <div className="flex gap-2">
               <Input
                 placeholder={t('searchPlaceholder')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="flex-1"
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                disabled={isLoading}
               />
-              <Button onClick={handleSearch} disabled={!query.trim() || isLoading}>
+              <button
+                onClick={handleSearch}
+                disabled={isLoading || !query.trim()}
+                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <SearchIcon className="w-4 h-4" />
                 )}
-              </Button>
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">{t('filterBy')}</label>
-                <Select value={type} onValueChange={(v: any) => setType(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="video">{t('videoType')}</SelectItem>
-                    <SelectItem value="channel">{t('channelType')}</SelectItem>
-                    <SelectItem value="playlist">{t('playlistType')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">{t('sortBy')}</label>
-                <Select value={order} onValueChange={(v: any) => setOrder(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="relevance">{t('sortRelevance')}</SelectItem>
-                    <SelectItem value="date">{t('sortDate')}</SelectItem>
-                    <SelectItem value="rating">{t('sortRating')}</SelectItem>
-                    <SelectItem value="viewCount">{t('sortViewCount')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">{t('safeSearch')}</label>
-                <Select value={safeSearch} onValueChange={(v: any) => setSafeSearch(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="moderate">{t('safeSearchModerate')}</SelectItem>
-                    <SelectItem value="none">{t('safeSearchNone')}</SelectItem>
-                    <SelectItem value="strict">{t('safeSearchStrict')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Type Selection */}
+            <div className="grid grid-cols-3 gap-2">
+              {(['video', 'channel', 'playlist'] as const).map((t_type) => (
+                <button
+                  key={t_type}
+                  onClick={() => setType(t_type)}
+                  className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                    type === t_type
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-accent text-foreground hover:bg-accent/80'
+                  }`}
+                >
+                  {t_type === 'video' ? t('videoType') : t_type === 'channel' ? t('channelType') : t('playlistType')}
+                </button>
+              ))}
             </div>
 
-            {/* Advanced Filters Toggle */}
-            <Button
-              variant="outline"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="w-full"
+            {/* Filters Toggle */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {t('advancedFilters')}
-              {showAdvanced ? <ChevronUp className="w-4 h-4 ml-2" /> : <ChevronDown className="w-4 h-4 ml-2" />}
-            </Button>
+              {showFilters ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </button>
 
-            {/* Advanced Filters */}
-            {showAdvanced && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-border">
+            {/* Filters */}
+            {showFilters && (
+              <div className="space-y-4 pt-4 border-t border-border">
+                {/* Sort Order */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">{t('duration')}</label>
-                  <Select value={videoDuration} onValueChange={(v: any) => setVideoDuration(v)}>
+                  <label className="text-sm font-medium text-foreground">{t('sortBy')}</label>
+                  <Select value={order} onValueChange={(value: any) => setOrder(value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="any">{t('durationAny')}</SelectItem>
-                      <SelectItem value="short">{t('durationShort')}</SelectItem>
-                      <SelectItem value="medium">{t('durationMedium')}</SelectItem>
-                      <SelectItem value="long">{t('durationLong')}</SelectItem>
+                      <SelectItem value="relevance">{t('relevance')}</SelectItem>
+                      <SelectItem value="date">{t('date')}</SelectItem>
+                      <SelectItem value="viewCount">{t('viewCount')}</SelectItem>
+                      <SelectItem value="rating">{t('rating')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
+                {/* Published After */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">{t('definition')}</label>
-                  <Select value={videoDefinition} onValueChange={(v: any) => setVideoDefinition(v)}>
+                  <label className="text-sm font-medium text-foreground">{t('publishedAfter')}</label>
+                  <Select value={publishedAfter} onValueChange={(value: any) => setPublishedAfter(value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="any">{t('definitionAny')}</SelectItem>
+                      <SelectItem value="any">{t('any')}</SelectItem>
+                      <SelectItem value="hour">{t('lastHour')}</SelectItem>
+                      <SelectItem value="day">{t('today')}</SelectItem>
+                      <SelectItem value="week">{t('thisWeek')}</SelectItem>
+                      <SelectItem value="month">{t('thisMonth')}</SelectItem>
+                      <SelectItem value="year">{t('thisYear')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Video Definition */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">{t('definition')}</label>
+                  <Select value={videoDefinition} onValueChange={(value: any) => setVideoDefinition(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">{t('any')}</SelectItem>
                       <SelectItem value="high">{t('definitionHigh')}</SelectItem>
                       <SelectItem value="standard">{t('definitionStandard')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
+                {/* Video Type */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">{t('dimension')}</label>
-                  <Select value={videoDimension} onValueChange={(v: any) => setVideoDimension(v)}>
+                  <label className="text-sm font-medium text-foreground">{t('videoType')}</label>
+                  <Select value={videoType} onValueChange={(value: any) => setVideoType(value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="any">{t('dimensionAny')}</SelectItem>
-                      <SelectItem value="2d">{t('dimension2d')}</SelectItem>
-                      <SelectItem value="3d">{t('dimension3d')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">{t('embeddable')}</label>
-                  <Select value={videoEmbeddable} onValueChange={(v: any) => setVideoEmbeddable(v)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="any">{t('embeddableAny')}</SelectItem>
-                      <SelectItem value="true">{t('embeddableTrue')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">{t('license')}</label>
-                  <Select value={videoLicense} onValueChange={(v: any) => setVideoLicense(v)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="any">{t('licenseAny')}</SelectItem>
-                      <SelectItem value="youtube">{t('licenseYoutube')}</SelectItem>
-                      <SelectItem value="creativeCommon">{t('licenseCreativeCommon')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">{t('videoTypeFilter')}</label>
-                  <Select value={videoType} onValueChange={(v: any) => setVideoType(v)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="any">{t('videoTypeAny')}</SelectItem>
-                      <SelectItem value="episode">{t('videoTypeEpisode')}</SelectItem>
-                      <SelectItem value="movie">{t('videoTypeMovie')}</SelectItem>
+                      <SelectItem value="any">{t('any')}</SelectItem>
+                      <SelectItem value="episode">{t('episode')}</SelectItem>
+                      <SelectItem value="movie">{t('movie')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -300,71 +298,59 @@ export default function Search() {
         </Card>
 
         {/* Results */}
-        {isLoading && allResults.length === 0 && (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        )}
-
         {allResults.length > 0 && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">
-                {t('searchResults')} ({totalLoaded} {t('resultsCount')})
-              </h2>
-              {maxReached && (
-                <span className="text-sm text-muted-foreground">{t('allLoaded')} (500 max)</span>
-              )}
+            <div className="text-sm text-muted-foreground">
+              {totalLoaded} {t('resultsCount')}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {allResults.map((item: any, index: number) => (
-                <Card key={`${item.id.videoId || item.id.channelId || item.id.playlistId}-${index}`} className="overflow-hidden hover:ring-2 hover:ring-primary/50 transition-all">
-                  <CardContent className="p-0">
-                    {item.snippet.thumbnails?.medium?.url && (
-                      <div className="relative aspect-video w-full bg-muted">
+
+            <div className="space-y-3">
+              {allResults.map((item, idx) => (
+                <Card key={idx} className="hover:border-primary/50 transition-colors">
+                  <CardContent className="pt-4">
+                    <div className="flex gap-4">
+                      {/* Thumbnail */}
+                      {item.snippet?.thumbnails?.medium && (
                         <img
                           src={item.snippet.thumbnails.medium.url}
                           alt={item.snippet.title}
-                          className="w-full h-full object-cover"
+                          className="w-24 h-24 rounded object-cover flex-shrink-0"
                         />
+                      )}
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground line-clamp-2">
+                          {item.snippet?.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {item.snippet?.description}
+                        </p>
+                        <div className="flex items-center gap-2 mt-3">
+                          <span className="text-xs bg-accent px-2 py-1 rounded">
+                            {item.id?.videoId ? 'Video' : item.id?.channelId ? 'Channel' : 'Playlist'}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                    <div className="p-4 space-y-3">
-                      <h3 className="font-semibold text-sm line-clamp-2 text-foreground">
-                        {item.snippet.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {item.snippet.description}
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => copyLink(
-                            item.id.videoId || item.id.channelId || item.id.playlistId,
-                            item.id.kind.split('#')[1]
-                          )}
+
+                      {/* Actions */}
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => copyToClipboard(getResultUrl(item))}
+                          className="p-2 hover:bg-accent rounded transition-colors"
+                          title="Copy link"
                         >
-                          <Copy className="w-3 h-3 mr-1" />
-                          {t('copyLink')}
-                        </Button>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => {
-                            const url = item.id.videoId
-                              ? `https://www.youtube.com/watch?v=${item.id.videoId}`
-                              : item.id.channelId
-                              ? `https://www.youtube.com/channel/${item.id.channelId}`
-                              : `https://www.youtube.com/playlist?list=${item.id.playlistId}`;
-                            toast.info(t('downloadInBot') + ': ' + url);
-                          }}
+                          <Copy className="w-4 h-4" />
+                        </button>
+                        <a
+                          href={getResultUrl(item)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 hover:bg-accent rounded transition-colors"
+                          title="Open on YouTube"
                         >
-                          <Download className="w-3 h-3 mr-1" />
-                          {t('downloadInBot')}
-                        </Button>
+                          <Download className="w-4 h-4" />
+                        </a>
                       </div>
                     </div>
                   </CardContent>
@@ -372,38 +358,40 @@ export default function Search() {
               ))}
             </div>
 
-            {/* Load More Button */}
-            {canLoadMore && (
-              <div className="flex justify-center pt-4">
-                <Button
-                  onClick={handleLoadMore}
-                  disabled={isLoading}
-                  size="lg"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {t('loadingMore')}
-                    </>
-                  ) : (
-                    t('loadMore')
-                  )}
-                </Button>
-              </div>
+            {/* Load More */}
+            {!maxReached && nextPageToken && (
+              <button
+                onClick={handleLoadMore}
+                disabled={isLoading}
+                className="w-full py-3 border border-border rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                    {t('loadingMore')}
+                  </>
+                ) : (
+                  t('loadMore')
+                )}
+              </button>
             )}
 
-            {!canLoadMore && totalLoaded > 0 && (
+            {maxReached && (
               <div className="text-center py-4 text-sm text-muted-foreground">
-                {maxReached ? `${t('allLoaded')} (500 max)` : t('allLoaded')}
+                {t('allLoaded')}
               </div>
             )}
           </div>
         )}
 
-        {allResults.length === 0 && !isLoading && searchParams && (
-          <div className="text-center py-12 text-muted-foreground">
-            {t('noResults')}
-          </div>
+        {/* Empty State */}
+        {!isLoading && allResults.length === 0 && searchParams && (
+          <Card className="border-dashed">
+            <CardContent className="pt-12 pb-12 text-center">
+              <SearchIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <p className="text-muted-foreground">{t('noResults')}</p>
+            </CardContent>
+          </Card>
         )}
       </main>
     </div>
